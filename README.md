@@ -47,7 +47,7 @@
 ##### 非短路操作：
     forEach / forEachOrdered  parallel并行流中使用forEachOrdered保证并行流顺序
     collect / toArray  收集， 转成一个数组或者是一个list集合
-    reduce
+    reduce  这个方法是将多行数据转换成一行数据
     min / max / count
     
 ##### 短路操作：   
@@ -167,7 +167,7 @@
 ##### 背压说白了就是一个交互， 一个反馈，就是发布者和订阅者之间的一个互动
 
 
-# Spring WebFlux
+# Spring WebFlux 
 ### 概念
 ##### 它是Spring5 提出的一种新的开发Web的技术栈，是一种非阻塞的开发模式，运行在Netty 或者是 Servlet3.1的容器上，可以支持非常高的并发量
 ### 和Spring MVC的关系
@@ -183,3 +183,41 @@
 
 ### 优势
 ###### 支持非常高的并发量
+
+### SSE (Server-Sent Events)
+##### flux返回多次数据， 但是Http协议是一问一答的形式，所以WebFlux是如何做到多次返回呢？（依赖H5的 SSE）
+
+### 完整实例(采用mongodb数据库)
+##### 1、依赖
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
+        </dependency>
+##### 2、@EnableReactiveMongoRepositories 
+##### 3、定义对象
+        @Document(collection = "user")
+        @Data
+##### 4、定义对应的仓库
+
+        @Repository
+        public interface UserRepository extends ReactiveMongoRepository<User, String> {
+        }
+##### 5、启动mongoDB
+       sc.exe create MongoDB binPath= "\"D:\Mongodb\bin\mongod.exe\" --service --config=\"D:\Mongodb\mongod.cfg\"" DisplayName= "MongoDB" start= "auto"
+       默认端口是27017
+##### 6、数据库配置
+        spring.data.mongodb.uri=mongodb://localhost:27017/webflux
+        
+### RouterFunction 模式
+##### WebFlux 可以运行在老的Servlet3.1容器上，或者是netty容器上， 所以需要将俩个容器的不同点抽象出来：
+    ServletRequest  <---> HttpServletRequest
+    ServletResponse <---> HttpServletResponse
+##### 开发过程：
+    HandlerFunction (输入 ServerRequest 返回 ServletResponse)
+    -> RouterFunction (请求URL 和 HandlerFunction 对应起来)
+    -> HttpHandler
+    -> Server处理 
+    
+### 在处理方法中注意:
+#### 我们在使用响应式编程的时候 Mono<T> Flux<T> 实际上是个流，它是一个发布者，我们任何时候都不能调这个发布者的订阅方法(就是我们自己的代码里边不能消费它,这个消费必须交给Spring框架来消费) 
